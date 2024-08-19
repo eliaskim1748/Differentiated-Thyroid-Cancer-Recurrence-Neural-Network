@@ -1,0 +1,155 @@
+---
+title: "Thyroid Cancer: Neural Networks"
+---
+
+```{r}
+#Loading libraries
+
+library(keras)
+library(caret)
+library(tidyverse)
+library(fastDummies)
+```
+
+```{r}
+#Installing TensorFlow and Keras in Python
+
+install_keras()
+```
+
+```{r}
+#Loading data
+
+cancer <- read_csv("/Users/Elias/Downloads/Portfolio/Thyroid_Diff.csv")
+
+head(cancer)
+```
+
+```{r}
+#Removing duplicates to prevent redundancy
+
+cancer1 <- unique(cancer)
+```
+
+```{r}
+#Creating dummy columns
+
+cancer2 <- cancer1 |> 
+  dummy_cols(remove_first_dummy = TRUE) |> 
+  select_if(is.numeric)
+```
+
+```{r}
+#Normalizing Age
+
+min_max <- function(x){
+  (x - min(x)) / (max(x) - min(x))
+}
+
+cancer2$Age <- min_max(cancer2$Age)
+```
+
+```{r}
+#Creating train and test sets
+
+splitIndex <- createDataPartition(cancer2$Recurred_Yes, p = .8, list = FALSE)
+
+train_data <- as.matrix(cancer2[splitIndex, 1:40])
+train_targets <- as.matrix(cancer2[splitIndex, 41])
+
+test_data <- as.matrix(cancer2[-splitIndex, 1:40])
+test_targets <- as.matrix(cancer2[-splitIndex, 41])
+```
+
+```{r}
+#Building the model
+
+build_model <- function(){
+  model <- keras_model_sequential() |> 
+    layer_dense(32, activation = "relu") |>
+    layer_dense(32, activation = "relu") |> 
+    layer_dense(1, activation = "sigmoid")
+  
+  model |> compile(optimizer = "rmsprop",
+                   loss = "binary_crossentropy",
+                   metrics = "accuracy")
+  model
+}
+```
+
+```{r}
+#Validating with K-fold validation
+
+fold_id <- sample(rep(1:4, length.out = nrow(train_data)))
+all_accuracy_histories <- list()
+all_loss_histories <- list()
+
+for (i in 1:4) {
+  cat("Processing fold #", i, "\n")
+  
+  val_indices <- which(fold_id == i)
+  val_data <- train_data[val_indices, ]
+  val_targets <- train_targets[val_indices]
+  
+  partial_train_data <- train_data[-val_indices, ]
+  partial_train_targets <- train_targets[-val_indices]
+  
+  model <- build_model()
+  history <- model |>  fit(
+    partial_train_data,
+    partial_train_targets,
+    validation_data = list(val_data, val_targets),
+    epochs = 100,
+    batch_size = 16,
+    verbose = 0,
+  )
+  
+  loss_history <- history$metrics$val_loss
+  all_loss_histories[[i]] <- loss_history
+  
+  accuracy_history <- history$metrics$val_accuracy
+  all_accuracy_histories[[i]] <- accuracy_history
+}
+```
+
+```{r}
+#Graphing validation loss and accuracy
+
+all_loss_histories1 <- do.call(cbind, all_loss_histories)
+average_loss_history <- rowMeans(all_loss_histories1)
+plot(average_loss_history, xlab = "epoch", ylab = "Average Validation Loss", type = 'l')
+
+all_accuracy_histories1 <- do.call(cbind, all_accuracy_histories)
+average_accuracy_history <- rowMeans(all_accuracy_histories1)
+plot(average_accuracy_history, xlab = "epoch", ylab = "Average Validation Accuracy", type = 'l')
+
+#The model starts overfitting around 20 epochs
+```
+```{r}
+#Training the final model
+
+model <- build_model()
+model |>  fit(train_data, train_targets,
+              epochs = 20, 
+              batch_size = 16, 
+              verbose = 0)
+```
+
+```{r}
+#Predicting on the test data
+
+predictions_prob <- model |>  predict(test_data)
+
+predictions_class <- ifelse(predictions_prob > 0.5, 1, 0)
+
+conf_matrix <- confusionMatrix(factor(predictions_class), factor(test_targets))
+
+print(conf_matrix)
+```
+
+```{r}
+#Clearing the workspace
+
+rm(list = ls())
+```
+
