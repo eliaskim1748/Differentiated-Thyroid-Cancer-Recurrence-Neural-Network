@@ -1,3 +1,3 @@
-# Differentiated Thyroid Cancer Recurrence Predictor
+# Differentiated Thyroid Cancer Recurrence Neural Network
 ## About
 
