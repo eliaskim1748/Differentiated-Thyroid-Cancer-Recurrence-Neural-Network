@@ -83,12 +83,10 @@ for (i in 1:4) {
 
 #Graphing validation loss and accuracy
 ##The model starts overfitting around 20 epochs
-all_loss_histories1 <- do.call(cbind, all_loss_histories)
-average_loss_history <- rowMeans(all_loss_histories1)
+average_loss_history <- rowMeans(do.call(cbind, all_loss_histories))
 plot(average_loss_history, xlab = "epoch", ylab = "Average Validation Loss", type = 'l')
 
-all_accuracy_histories1 <- do.call(cbind, all_accuracy_histories)
-average_accuracy_history <- rowMeans(all_accuracy_histories1)
+average_accuracy_history <- rowMeans(do.call(cbind, all_accuracy_histories))
 plot(average_accuracy_history, xlab = "epoch", ylab = "Average Validation Accuracy", type = 'l')
 
 #Training the final model
@@ -100,9 +98,10 @@ model |>  fit(train_data, train_targets,
 
 #Predicting on the test data
 predictions_prob <- model |>  predict(test_data)
+
 predictions_class <- ifelse(predictions_prob > 0.5, 1, 0)
-conf_matrix <- confusionMatrix(factor(predictions_class), factor(test_targets))
-print(conf_matrix)
+
+confusionMatrix(factor(predictions_class), factor(test_targets))
 
 #Clearing the workspace
 rm(list = ls())
