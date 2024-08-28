@@ -8,7 +8,7 @@ library(fastDummies)
 install_keras()
 
 #Loading data
-cancer <- read_csv("/Users/Elias/Downloads/Portfolio/Thyroid_Diff.csv")
+cancer <- read_csv("Thyroid_Diff.csv")
 
 head(cancer)
 
