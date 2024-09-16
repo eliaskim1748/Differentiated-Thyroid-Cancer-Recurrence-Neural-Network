@@ -5,7 +5,5 @@ In oncology, predicting cancer recurrence is a major challenge. Differentiated t
 
 Source: https://archive.ics.uci.edu/dataset/915/differentiated+thyroid+cancer+recurrence
 
-Description of variables: https://docs.google.com/document/d/1WkrNjHkRGtAmrBt74b2fmnp4JoBhPOa9qWlby1eHrrw/edit 
-
 
  
